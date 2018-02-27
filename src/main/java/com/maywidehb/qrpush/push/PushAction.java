@@ -47,7 +47,7 @@ public class PushAction {
         String message = request.getParameter("message");
 
         pushService.send(userId,message);
-        return "推送广播消息成功";
+        return "推送消息成功";
     }
 
 
