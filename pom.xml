@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.maywidehb</groupId>
+	<artifactId>qrpush</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>qrpush</name>
+	<description>Push_OS</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.9.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+
+		<!--下面是mpush包的引入-->
+        <dependency>
+            <groupId>com.github.mpusher</groupId>
+            <artifactId>mpush-client</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.mpusher</groupId>
+            <artifactId>mpush-boot</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<layout>ZIP</layout>
+					<!--去除在生产环境中不变的依赖
+					<excludeGroupIds>
+						org.springframework.boot,
+						org.springframework,
+						org.springframework.data,
+						org.mongodb,
+						com.github.0604hx,
+						com.fasterxml.jackson.core,
+						commons-beanutils,
+						commons-codec,
+						org.apache.commons,
+						org.apache.tomcat.embed,
+						org.hibernate,
+						org.slf4j,
+						com.jayway,
+						org.jboss,
+						com.alibaba,
+						com.fasterxml,
+						commons-collections,
+						ch.qos.logback,
+						org.scala-lang,
+						org.yaml,
+						org.jboss.logging,
+						javax.validation,
+						nz.net.ultraq.thymeleaf,
+						org.thymeleaf,
+						ognl,
+						org.unbescape,
+						org.javassist
+					</excludeGroupIds>
+					-->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>

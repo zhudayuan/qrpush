@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+
+    <!-- 尽量别用绝对路径，如果带参数不同容器路径解释可能不同,以下配置参数在pom.xml里 -->
+    <property name="log.root.level" value="INFO"/> <!-- 日志级别 -->
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder charset="UTF-8">
+            <pattern>%d{HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="INFO"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <logger name="console" additivity="true">
+        <level value="debug"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+</configuration>
