@@ -36,9 +36,12 @@ public class PushAction {
         String condition = request.getParameter("condition");
         String message = request.getParameter("message");
 
-        pushService.sendBroadcast(Arrays.asList(tags), condition, message, null);
+        boolean flag = pushService.sendBroadcast(tags==null?null:Arrays.asList(tags), condition, message, null);
+        if(flag)
+            return "推送广播消息成功";
+        else
+            return "推送广播消息失败";
 
-        return "推送广播消息成功";
     }
 
     @RequestMapping(value="/sendByUserId")

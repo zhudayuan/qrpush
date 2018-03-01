@@ -41,7 +41,7 @@ public class PushServiceImpl implements PushService{
     @Override
     public boolean sendBroadcast(List<String> tags, String condition, String message, PushCallback callback) throws Exception{
         return send(null,null, AckModel.AUTO_ACK, message,true,tags,
-                condition,6000 ,callback);
+                condition,60000 ,callback);
     }
 
 
@@ -51,18 +51,18 @@ public class PushServiceImpl implements PushService{
             throw new Exception("根据userId推送消息,userId不能为空");
         }
         return send(userId,null,AckModel.AUTO_ACK, message,false,null,
-                null,6000 ,null);
+                null,60000 ,null);
     }
     @Override
     public boolean send(String userId ,String message, PushCallback callback) throws Exception{
         return send(userId,null,AckModel.AUTO_ACK, message,false,null,
-                null,6000 ,callback);
+                null,60000 ,callback);
     }
 
     @Override
     public boolean send(String userId,List<String> userIds ,String message, PushCallback callback) throws Exception{
         return send(userId,userIds,AckModel.AUTO_ACK, message,false,null,
-                null,6000 ,callback);
+                null,60000 ,callback);
     }
 
     

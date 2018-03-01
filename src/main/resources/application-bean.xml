@@ -14,5 +14,4 @@
           init-method="start" destroy-method="stop">
         <property name="MPushContext" ref="mPushClient"/>
     </bean>
-
 </beans>
