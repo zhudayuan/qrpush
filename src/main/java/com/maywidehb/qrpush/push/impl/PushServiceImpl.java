@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,8 +28,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class PushServiceImpl implements PushManager {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final AtomicLong msgIdSeq = new AtomicLong(1);//TODO业务自己处理
+    private final AtomicLong msgIdSeq = new AtomicLong(1);
 
+    private long startTime = 0;
+    private long endTime = 0;
+
+    @Resource
     private PushSender mpusher;
     public PushServiceImpl(){
 
@@ -47,7 +52,7 @@ public class PushServiceImpl implements PushManager {
             throw new Exception("根据userId推送消息,userId不能为空");
         }
         return send(userId,null,AckModel.AUTO_ACK, message,false,null,
-                null,60000 ,null);
+                null,6000 ,null);
     }
 
 
@@ -93,7 +98,9 @@ public class PushServiceImpl implements PushManager {
     }
 
 
+
     private String send2(PushContext context,int num ) throws Exception{
+        startTime = System.currentTimeMillis();
 
         if(null ==mpusher){
             mpusher = PushSender.create();
@@ -103,6 +110,8 @@ public class PushServiceImpl implements PushManager {
         PushResult futureResult =null;
 
         boolean flag = true;
+        String res;
+
         while(flag){
             if(future.isDone()){
                 futureResult = future.get();
@@ -110,12 +119,25 @@ public class PushServiceImpl implements PushManager {
                     num--;
                     send2(context, num);
                 }
-                System.out.println("====推送返回的结果是："+futureResult);
                 flag = false;
             }
         }
+        endTime = System.currentTimeMillis();
 
-        return futureResult.toString();
+        if(null != futureResult && futureResult.resultCode > -1){
+            res = "Result{resultCode="+futureResult.resultCode+
+                    ",resultCode=" + futureResult.getResultDesc() +
+                    ", userId='" + futureResult.getUserId() + '\'' +
+                    ", costTime=" + (endTime - startTime)+
+                    ","+futureResult.getLocation()+"}";
+        }else{
+            res = "Result{resultCode=2,resultDesc=failure" +
+                    ", userId='" + context.getUserId() + '\'' +
+                    ", costTime=" + (endTime - startTime)+"}";
+        }
+        System.out.println("====推送返回的结果是："+res);
+
+        return res;
     }
 
     private PushCallback callBack(PushCallback callback,String message){
