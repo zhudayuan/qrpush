@@ -17,7 +17,7 @@
  *     ohun@live.cn (夜色)
  */
 
-package com.maywidehb.qrpush.push.service;
+package com.maywidehb.qrpush.query;
 
 import com.mpush.api.srd.ServiceDiscovery;
 import com.mpush.api.srd.ServiceNames;
@@ -39,7 +39,7 @@ import java.util.List;
  * @author ohun@live.cn (夜色)
  */
 @Service
-public class MPushManager {
+public class QueryManager {
 
     @Resource
     private ServiceDiscovery serviceDiscovery;

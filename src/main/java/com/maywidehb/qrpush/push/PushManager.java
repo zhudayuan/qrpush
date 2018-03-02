@@ -17,10 +17,8 @@
  *     ohun@live.cn (夜色)
  */
 
-package com.maywidehb.qrpush.push.service;
+package com.maywidehb.qrpush.push;
 
-
-import com.mpush.api.push.PushCallback;
 
 import java.util.List;
 
@@ -29,13 +27,12 @@ import java.util.List;
  *
  * @author ohun@live.cn (夜色)
  */
-public interface PushService {
-    boolean sendBroadcast(List<String> tags, String condition, String message, PushCallback callback) throws Exception;
+public interface PushManager {
+    String sendBroadcast(List<String> tags, String condition, String message) throws Exception;
 
-    boolean send(String userId, String message) throws Exception;
+    String send(String userId, String message) throws Exception;
 
-    boolean send(String userId,List<String> userIds ,String message, PushCallback callback) throws Exception;
+    String send(List<String> userIds ,String message) throws Exception;
 
-    boolean send(String userId ,String message, PushCallback callback) throws Exception;
 
 }
