@@ -17,7 +17,7 @@
  *     ohun@live.cn (夜色)
  */
 
-package com.maywidehb.qrpush.query;
+package com.maywidehb.qrpush.service;
 
 import com.mpush.api.srd.ServiceDiscovery;
 import com.mpush.api.srd.ServiceNames;

@@ -1,4 +1,4 @@
-package com.maywidehb.qrpush;
+package com.maywidehb.qrpush.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

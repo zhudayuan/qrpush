@@ -1,6 +1,6 @@
-package com.maywidehb.qrpush;
+package com.maywidehb.qrpush.controller;
 
-import com.maywidehb.qrpush.query.QueryManager;
+import com.maywidehb.qrpush.service.QueryManager;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

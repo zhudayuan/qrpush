@@ -17,8 +17,10 @@
  *     ohun@live.cn (夜色)
  */
 
-package com.maywidehb.qrpush.push;
+package com.maywidehb.qrpush.service.push;
 
+
+import com.maywidehb.qrpush.entity.RetResult;
 
 import java.util.List;
 
@@ -28,11 +30,11 @@ import java.util.List;
  * @author ohun@live.cn (夜色)
  */
 public interface PushManager {
-    String sendBroadcast(List<String> tags, String condition, String message) throws Exception;
+    RetResult sendBroadcast(List<String> tags, String condition, String message) throws Exception;
 
-    String send(String userId, String message) throws Exception;
+    RetResult send(String userId, String message) throws Exception;
 
-    String send(List<String> userIds ,String message) throws Exception;
+    RetResult send(List<String> userIds ,String message) throws Exception;
 
 
 }
