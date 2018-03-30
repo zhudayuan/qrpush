@@ -92,7 +92,7 @@ public class PushServiceImpl implements PushManager {
                 .setTimeout(timeout)
                 .setCallback(callback);
 
-        return send2(context, 3);
+        return send2(context, 2);
     }
 
 
