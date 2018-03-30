@@ -31,8 +31,6 @@ public class QrCodeImpl  implements QrManager {
 
     /**
      *
-     * @return
-     * @throws Exception
      */
     @Override
     public Result pushCodeToClient(String cardid,String code0,String qrid,String serviceid) throws Exception {
@@ -62,10 +60,10 @@ public class QrCodeImpl  implements QrManager {
     @Override
     public Result pushQrList(List<String> jsonList) throws Exception {
         Result ret = new Result();
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         int successNum = 0;
         int failureNum = 0;
-        String cardid = null;
+        String cardid = "";
         long stime=System.currentTimeMillis();
         for(String ss:jsonList){
             JSONObject qrs = JSON.parseObject(ss);
@@ -74,6 +72,7 @@ public class QrCodeImpl  implements QrManager {
                 JSONObject qr = JSON.parseObject(ss);
                 cardid = qr.getString("LOGICDEVNO");
                 qr.put("CHANNELID",channelIds.split(",")[i]);
+
                 try {
                     qr = dealQrCode(qr);
                     ret = push(qr.getString("cardid"), qr.toString());
@@ -105,7 +104,7 @@ public class QrCodeImpl  implements QrManager {
         return ret;
     }
 
-    public JSONObject dealQrCode(JSONObject qr) throws Exception {
+    private JSONObject dealQrCode(JSONObject qr) throws Exception {
         JSONObject qrscene = new JSONObject();
         long startTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").parse(qr.getString("QRTIME")).getTime();
         if(startTime < System.currentTimeMillis()){
@@ -131,7 +130,7 @@ public class QrCodeImpl  implements QrManager {
         qr.put("serviceid", qr.getLongValue("CHANNELID"));
         qr.put("workhours", qr.get("WORKTIMES"));
         qr.put("aftertime", qr.get("AFTERTIMES"));
-        qr.put("COUNTDOWN", (1==qr.getInteger("COUNTDOWN"))?true:false);
+        qr.put("COUNTDOWN", (1==qr.getInteger("COUNTDOWN")));
 
         qr.remove("WORKTIMES");
         qr.remove("LOGICDEVNO");
@@ -162,9 +161,9 @@ public class QrCodeImpl  implements QrManager {
         return jsonObject;
     }
 
-    public  JSONObject getQrByAID(String AID) throws Exception {
+    private  JSONObject getQrByAID(String AID) throws Exception {
 
-        String rule = null;
+        String rule = "";
         rule = RedisUtil.getKeyByDbidx("R_"+AID, 1);
         if(StringUtils.isBlank(rule)){
             if(QrConstant.PARAM.BI_AID_M.equals(AID)){
@@ -174,16 +173,14 @@ public class QrCodeImpl  implements QrManager {
             }
         }
 
-        JSONObject jsonObject = JSON.parseObject(rule);
-
-        return jsonObject;
+        return JSON.parseObject(rule);
     }
     /**
      * json key相同值覆盖(忽略大小写)
-     * @param json1
-     * @param json2
+     * @param json1 原
+     * @param json2 取
      * @return json1
-     * @throws JSONException
+     * @throws Exception
      */
     @SuppressWarnings("rawtypes")
     public static JSONObject mergeSameKeys(JSONObject json1,JSONObject json2) throws JSONException {
