@@ -12,19 +12,14 @@ public class RedisConfig {
 
     private static Logger logger = Logger.getLogger(RedisConfig.class);
 
-    private static JedisPool jpool = null;
+    public static JedisPool jpool = null;
+    private static JedisPoolConfig config = getRedisConfig();
+
     static {
         try{
             if(jpool == null){
-                JedisPoolConfig config = new JedisPoolConfig();
-                config.setMinIdle(CF.redis.minIdle);
-                config.setMaxIdle(CF.redis.maxIdle);
-                config.setMaxWaitMillis(CF.redis.maxWait);
-                config.setMaxTotal(CF.redis.maxTotal);
-                config.setTestOnBorrow(true);
 //                jpool = new JedisPool(config,CF.redis.host,CF.redis.port,CF.redis.timeout);
                 jpool = new JedisPool(config,CF.redis.host,CF.redis.port,CF.redis.timeout,CF.redis.password);
-
             }
         } catch(Exception e){
             e.printStackTrace();
@@ -35,40 +30,41 @@ public class RedisConfig {
             if(jpool != null){
                 return jpool.getResource();
             }else{
-                return null;
+                jpool = new JedisPool(config,CF.redis.host,CF.redis.port,CF.redis.timeout,CF.redis.password);
+                return jpool.getResource();
             }
         } catch(Exception e){
             e.printStackTrace();
             return null;
         }
     }
-    public static void returnResource(Jedis jedis){
+    public static void closeJedis(Jedis jedis){
         try{
-            if(jpool != null){
-                jpool.returnBrokenResource(jedis);
+            if(jedis != null){
+                jedis.close();
             }
         } catch(Exception e){
             e.printStackTrace();
         }
     }
-    /**
-     @Bean("jedis.config")
-     public JedisPoolConfig getRedisConfig(){
-     JedisPoolConfig config = new JedisPoolConfig();
-     config.setMinIdle(minIdle);
-     config.setMaxIdle(maxIdle);
-     config.setMaxWaitMillis(maxWaitMillis);
-     config.setMaxTotal(maxTotal);
-     config.setTestOnBorrow(testOnBorrow);
-     return config;
-     }
+//    public static void returnResource(Jedis jedis){
+//        try{
+//            if(jpool != null){
+//                jpool.returnBrokenResource(jedis);
+//            }
+//        } catch(Exception e){
+//            e.printStackTrace();
+//        }
+//    }
+    public static JedisPoolConfig getRedisConfig(){
+        JedisPoolConfig config = new JedisPoolConfig();
+        config.setMinIdle(CF.redis.minIdle);
+        config.setMaxIdle(CF.redis.maxIdle);
+        config.setMaxWaitMillis(CF.redis.maxWait);
+        config.setMaxTotal(CF.redis.maxTotal);
+        config.setTestOnBorrow(true);
+        return config;
+    }
 
-     @Bean
-     public JedisPool jedisPool(){
-     JedisPoolConfig config = getRedisConfig();
-     JedisPool pool = new JedisPool(config,host,port);
-     logger.info("init JredisPool ...");
-     return pool;
-     }
-     */
+
 }

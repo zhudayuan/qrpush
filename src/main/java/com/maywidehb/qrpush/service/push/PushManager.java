@@ -20,9 +20,11 @@
 package com.maywidehb.qrpush.service.push;
 
 
-import com.maywidehb.qrpush.entity.RetResult;
+import com.mpush.api.push.PushCallback;
+import com.mpush.api.push.PushResult;
 
 import java.util.List;
+import java.util.concurrent.FutureTask;
 
 /**
  * Created by ohun on 16/9/15.
@@ -30,11 +32,11 @@ import java.util.List;
  * @author ohun@live.cn (夜色)
  */
 public interface PushManager {
-    RetResult sendBroadcast(List<String> tags, String condition, String message) throws Exception;
+    PushResult sendBroadcast(List<String> tags, String condition, String message) throws Exception;
 
-    RetResult send(String userId, String message) throws Exception;
+    PushResult send(String userId, String message, PushCallback callback) throws Exception;
 
-    RetResult send(List<String> userIds ,String message) throws Exception;
+    PushResult send(List<String> userIds ,String message) throws Exception;
 
-
+    FutureTask futurePush(String userId, String message, int timeout,PushCallback callBack) throws Exception;
 }

@@ -43,14 +43,17 @@ public interface QrConstant {
 
     interface PARAM {
         /** 广告位  1 - 中间,  2 - 右下角*/
-        public static final String BI_AID_M = "1";
-        public static final String BI_AID_R = "2";
+        public static final String BI_AID_M = "81";
+        public static final String BI_AID_R = "101";
         public static final String BI_AD_KEY = "2948C14F7ADC8896E0538D11CD0A3FF2";
 
         /** 默认二维码  M - 中间,  R - 右下角*/
-        public static final String QR_RULE_M = "{\"backhp\":365,\"backwp\":365,\"backsize\":550,\"qrwp\":490,\"qrhp\":365,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/550.png\",\"countdown\":false}";
+//        public static  String QR_RULE_M = "{\"backhp\":35,\"backwp\":315,\"backsize\":650,\"qrwp\":490,\"qrhp\":297,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":-1,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/6501.png\",\"countdown\":false}";
+//        public static  String QR_RULE_R = "{\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/185.png\",\"countdown\":false}";
 
-        public static final String QR_RULE_R = "{\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/185.png\",\"countdown\":false}";
+        //内网
+        public static  String QR_RULE_M = "{\"backhp\":35,\"backwp\":315,\"backsize\":650,\"qrwp\":490,\"qrhp\":297,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":-1,\"aftertime\":0,\"backurl\":\"http://172.31.252.35/gd/6501.png\",\"countdown\":false}";
+        public static  String QR_RULE_R = "{\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"http://172.31.252.35/gd/185.png\",\"countdown\":false}";
 
     }
 

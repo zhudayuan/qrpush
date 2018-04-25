@@ -3,10 +3,10 @@ package com.maywidehb.qrpush.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.maywidehb.qrpush.entity.Result;
-import com.maywidehb.qrpush.entity.RetResult;
 import com.maywidehb.qrpush.service.QrManager;
 import com.maywidehb.qrpush.service.push.PushManager;
 import com.maywidehb.qrpush.utils.Des3;
+import com.mpush.api.push.PushResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,7 +39,6 @@ public class PushAction {
     /**
      */
     @RequestMapping("/pushReturn")
-    @SuppressWarnings("unchecked")
     public Result pushReturn(@RequestBody Map<String,String> reqMap)throws Exception{
         String cardid =  reqMap.get("cardid");
         String serviceid = reqMap.get("serviceid");
@@ -64,32 +63,20 @@ public class PushAction {
         cardid = Des3.hexdecrypt(cardid);
         return manager.pushCodeToClient(cardid,code,qrid,serviceid);
     }
-    @RequestMapping("/postQrCode")
-    public Result postQrCode(HttpServletRequest request)throws Exception{
-        String ruleId = request.getParameter("ruleid");
-        String userId = request.getParameter("userid");
-        String startTime = request.getParameter("startTime");
-
-        if(StringUtils.isBlank(ruleId)
-                || StringUtils.isBlank(userId)){
-            throw new Exception("ruleid或者userid为空, 请检查");
-        }
-        return manager.pushQrCode(userId, Long.parseLong(ruleId.trim()), startTime);
-    }
 
     @RequestMapping("/pushQrcode")
-    @SuppressWarnings("unchecked")
     public Result pushQrList(@RequestBody Map<String,Object> reqMap)throws Exception{
-        List<String> jsonList = new ArrayList<String>();
 
-        Iterator<String> iterator = ((List<String>) reqMap.get("QRLIST")).iterator();
+        if(reqMap.get("QRLIST") == null ){
+            throw new Exception("参数QRLIST为空");
+        }
+        List<String> jsonList = new ArrayList<>();
+        Iterator iterator = ((List) reqMap.get("QRLIST")).iterator();
         while(iterator.hasNext()){
             String qr = JSON.toJSONString(iterator.next());
             jsonList.add(qr);
         }
-        if(jsonList == null || jsonList.size()<1){
-            throw new Exception("参数为空");
-        }
+
         return manager.pushQrList(jsonList);
     }
 
@@ -99,7 +86,7 @@ public class PushAction {
     }
 
     @RequestMapping(value="/sendByBroadcast")
-    public RetResult sendByBroadcast(HttpServletRequest request) throws Exception{
+    public PushResult sendByBroadcast(HttpServletRequest request) throws Exception{
 
         String tags = request.getParameter("tags");
         String condition = request.getParameter("condition");
@@ -112,18 +99,9 @@ public class PushAction {
         return pushManager.sendBroadcast(tags==null?null:Arrays.asList(tags), condition, message);
     }
 
-    @RequestMapping(value="/sendByUserId")
-    public RetResult sendByUserId(HttpServletRequest request)  throws Exception{
-        String userId = request.getParameter("userId");
-        String message = request.getParameter("message");
-
-        message = decode(message, "UTF-8");
-
-        return pushManager.send(userId,message);
-    }
 
     @RequestMapping(value="/sendByUserIds")
-    public RetResult sendByUserIds(HttpServletRequest request)  throws Exception{
+    public PushResult sendByUserIds(HttpServletRequest request)  throws Exception{
         String userIds = request.getParameter("userIds");
         String message = request.getParameter("message");
         message = decode(message, "UTF-8");
@@ -131,26 +109,35 @@ public class PushAction {
     }
 
     @RequestMapping(value="/testPushQrcode")
-    public Result testPushQrcode(HttpServletRequest request)throws Exception{
+    public Result testPushQrcode(HttpServletRequest request,@RequestBody Map<String,Object> reqMap)throws Exception{
 
         String is = request.getParameter("userId_i");
         String js = request.getParameter("userId_j");
-        List<String> jsonList = new ArrayList<String>();
 
-        if(StringUtils.isNotBlank(is)&&StringUtils.isNotBlank(js)
-                &&Integer.parseInt(is)>0&&Integer.parseInt(js)>0){
-            String ret="{\"code\" : 0, \"data\" : {\"AFTERTIMES\" : 15000, \"AID\" : \"1\",\"BACKURL\" : \"http://*****/static/20180130121155553_568cjfx1.jpg\",\"COUNTDOWN\" : 1, \"DELIVERID\" : \"12\",\"QRHP\" : 300,\"QRSIZE\" : 400,\"QRURL\" : \" http://*****/static/20180130121155553_568?relation=12&tvtime1=1000&tvtime2=2000\",\"QRWP\": 300,\"WORKTIMES\":30000},\"msg\":\"success\"}";
-            JSONObject json = JSON.parseObject(ret).getJSONObject("data");
-            for(int i=Integer.parseInt(is);i>0;i--){
-                for(int j=Integer.parseInt(js);j>0;j--){
-                    json.put("LOGICDEVNO","userid-"+i+"_"+j);
-                    json.put("CHANNELID","123,117");
-                    json.put("QRTIME","20180321 16:49:25");
-                    jsonList.add(json.toJSONString());
+        if(reqMap.get("QRLIST") == null ){
+            throw new Exception("参数QRLIST为空");
+        }
+        List<String> jsonList = new ArrayList<>();
+        Iterator iterator = ((List) reqMap.get("QRLIST")).iterator();
+
+        while(iterator.hasNext()){
+            String qr = JSON.toJSONString(iterator.next());
+//            jsonList.add(qr);
+            if(StringUtils.isNotBlank(is)&&StringUtils.isNotBlank(js)){
+                JSONObject json = JSON.parseObject(qr);
+                String [] user_is = is.split(",");
+                for(int i=0;i<user_is.length;i++){
+                    for(int j=Integer.parseInt(js);j>0;j--){
+                        json.put("LOGICDEVNO","userid-"+user_is[i]+"_"+j);
+                        jsonList.add(json.toJSONString());
+                    }
                 }
             }
         }
-        if(jsonList == null || jsonList.size()<1){
+
+
+
+        if(jsonList.size()<1){
             throw new Exception("参数为空");
         }
         return manager.pushQrList(jsonList);

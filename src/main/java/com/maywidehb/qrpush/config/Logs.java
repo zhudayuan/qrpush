@@ -22,6 +22,8 @@ package com.maywidehb.qrpush.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static ch.qos.logback.classic.util.ContextInitializer.CONFIG_FILE_PROPERTY;
+
 /**
  * Created by ohun on 2016/5/16.
  *
@@ -29,11 +31,21 @@ import org.slf4j.LoggerFactory;
  */
 public interface Logs {
 
+    boolean logInit = init();
+
+    static boolean init() {
+        if (logInit) return true;
+        System.setProperty("log.root.level", CF.qr.log.log_root_level);
+        System.setProperty(CONFIG_FILE_PROPERTY, CF.qr.log.log_conf);
+        return true;
+    }
 
     Logger Console = LoggerFactory.getLogger("console");
 
-    Logger QRPUSH = LoggerFactory.getLogger("qr.push.log");
+    Logger QRCODE= LoggerFactory.getLogger("qr.code.log");
 
     Logger QRREQUEST = LoggerFactory.getLogger("qr.request.log");
+
+    Logger QRPR = LoggerFactory.getLogger("qr.push.log");
 
 }

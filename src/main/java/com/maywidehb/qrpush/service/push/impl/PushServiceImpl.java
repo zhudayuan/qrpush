@@ -1,7 +1,7 @@
 package com.maywidehb.qrpush.service.push.impl;
 
 import com.google.common.collect.Sets;
-import com.maywidehb.qrpush.entity.RetResult;
+import com.maywidehb.qrpush.config.Logs;
 import com.maywidehb.qrpush.service.push.PushManager;
 import com.mpush.api.Constants;
 import com.mpush.api.push.AckModel;
@@ -9,55 +9,50 @@ import com.mpush.api.push.PushCallback;
 import com.mpush.api.push.PushContext;
 import com.mpush.api.push.PushResult;
 import com.mpush.api.push.PushSender;
-import com.mpush.api.router.ClientLocation;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 
 
 @Service
 public class PushServiceImpl implements PushManager {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final AtomicLong msgIdSeq = new AtomicLong(1);
-
-    private long startTime = 0;
-    private long endTime = 0;
 
     @Resource
     private PushSender mpusher;
     public PushServiceImpl(){
-
+        if(null == mpusher){
+            mpusher = PushSender.create();
+            mpusher.start().join();
+        }
     }
 
     @Override
-    public RetResult sendBroadcast(List<String> tags, String condition, String message) throws Exception{
+    public PushResult sendBroadcast(List<String> tags, String condition, String message) throws Exception{
         return send(null,null, AckModel.NO_ACK, message,true,tags,
-                condition,300000 ,null);
+                condition,30000 ,null);
     }
 
 
     @Override
-    public RetResult send(String userId, String message) throws Exception{
+    public PushResult send(String userId, String message, PushCallback callback) throws Exception{
         if(StringUtils.isEmpty(userId)){
             throw new Exception("根据userId推送消息,userId不能为空");
         }
         return send(userId,null,AckModel.AUTO_ACK, message,false,null,
-                null,60000 ,null);
+                null,30000 ,callback);
     }
 
 
     @Override
-    public RetResult send(List<String> userIds ,String message) throws Exception{
+    public PushResult send(List<String> userIds ,String message) throws Exception{
         return send(null,userIds,AckModel.AUTO_ACK, message,false,null,
-                null,300000 ,null);
+                null,60000 ,null);
     }
 
     
@@ -74,12 +69,10 @@ public class PushServiceImpl implements PushManager {
      * @param callback 回调函数
      * @return boolean
      */
-    private RetResult send(String userId, List<String> userIds, AckModel ackModel,
+    private PushResult send(String userId, List<String> userIds, AckModel ackModel,
                         String message, boolean Broadcast, List<String> tags,
                         String condition, int timeout, PushCallback callback) throws Exception{
-        callback = this.callBack( callback, message);
-//        PushMsg pushMsg = PushMsg.build(MsgType.MESSAGE, message);
-//        pushMsg.setMsgId(Long.toString(msgIdSeq.incrementAndGet()));
+
         byte[] content = message.getBytes(Constants.UTF_8);
 
         PushContext context = new PushContext(content)
@@ -92,74 +85,61 @@ public class PushServiceImpl implements PushManager {
                 .setTimeout(timeout)
                 .setCallback(callback);
 
-        return send2(context, 2);
+        return send2(context, 1);
     }
 
 
+    //同步推送,等待返回结果
+    private PushResult send2(PushContext context, int num ) throws Exception{
 
-    private RetResult send2(PushContext context, int num ) throws Exception{
-        startTime = System.currentTimeMillis();
 
-        if(null ==mpusher){
-            mpusher = PushSender.create();
-            mpusher.start().join();
-        }
         FutureTask<PushResult> future = mpusher.send(context);
-        PushResult futureResult = new PushResult(2);
+        //不是单用户推送,不返回推送结果
+        if(context.getUserId() == null){
+            return future.get();
+        }
+        PushResult pushResult = new PushResult(2);
         boolean flag = true;
-        String res;
 
         while(flag){
             if(future.isDone()){
-                futureResult = future.get();
-                if(PushResult.CODE_TIMEOUT == futureResult.resultCode && num > 0){
+                pushResult = future.get();
+                if(PushResult.CODE_TIMEOUT == pushResult.resultCode && num > 0){
+                    Logs.QRPR.info("send msg {},userId={},timeLine={}",
+                            pushResult.getResultDesc(), context.getUserId(), Arrays.toString(pushResult.timeLine));
                     num--;
-                    send2(context, num);
+                    return send2(context, num);
                 }
                 flag = false;
+            }else{
+                Thread.sleep(2);
             }
         }
-        endTime = System.currentTimeMillis();
-        RetResult ret=new RetResult();
-        ret.setRetCode(futureResult.resultCode)
-                .setCostTime(endTime - startTime)
-                .setRetMsg(futureResult.getResultDesc())
-                .setRetData(futureResult.getLocation())
-                .setUserId(context.getUserId());
-//                .setSedMsg(Jsons.fromJson(context.getContext(),Object.class));
-//        System.out.println("====推送返回的结果是："+ Jsons.toJson(ret).toString());
+        Logs.QRPR.info("send msg {},userId={}",pushResult.getResultDesc(), context.getUserId());
 
-        return ret;
+        return pushResult;
     }
 
-    private PushCallback callBack(PushCallback callback,String message){
-        if(null == callback){
-            callback= new PushCallback() {
-                @Override
-                public void onSuccess(String userId, ClientLocation clientLocation) {
-                    logger.warn("send msg success,userId={},location={},content={}"
-                            ,userId,clientLocation,message);
-                }
-                @Override
-                public void onFailure(String userId, ClientLocation clientLocation) {
-                    logger.warn("send msg failure,userId={},location={},content={}"
-                            ,userId,clientLocation,message);
-                }
-                @Override
-                public void onOffline(String userId, ClientLocation clientLocation) {
-                    logger.warn("send msg offline,userId={}",userId);
-                }
-                @Override
-                public void onTimeout(String userId, ClientLocation clientLocation) {
-                    logger.warn("send msg timeout ,userId={}",userId);
-                }
-            };
+
+
+
+
+    @Override
+    public FutureTask futurePush(String userId, String message, int timeout, PushCallback callBack) {
+
+        if(null == mpusher){
+            mpusher = PushSender.create();
+            mpusher.start().join();
         }
+        byte[] content = message.getBytes(Constants.UTF_8);
 
-        return callback;
+        PushContext context = new PushContext(content)
+                .setAckModel(AckModel.NO_ACK)
+                .setUserId(userId)
+                .setTimeout(timeout)
+                .setCallback(callBack);
+
+        return mpusher.send(context);
     }
-
-
-
 
 }

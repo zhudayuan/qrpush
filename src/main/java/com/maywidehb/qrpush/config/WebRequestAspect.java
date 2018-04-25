@@ -48,10 +48,14 @@ public class WebRequestAspect {
         if(paramMap!=null && paramMap.size()>0){
             allParams.add(paramMap);
         }
+        String args=JSON.toJSONString(allParams);
+        if(args!=null && args.length()>1000){
+            args = "ARGS IS TOO LONG,SUBSTRING(0,1000),"+args.substring(0,1000);
+        }
 
         // 记录下请求内容
         Logs.QRREQUEST.info("REQUEST_INFO:IP={},{},URL={},ARGS={}",getRemoteHost(request),request.getMethod(),
-                request.getRequestURL(),JSON.toJSONString(allParams));
+                request.getRequestURL(),args);
 
     }
 
