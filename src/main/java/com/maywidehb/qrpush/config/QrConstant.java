@@ -17,6 +17,8 @@ public interface QrConstant {
         /** 微信小程序类型,优惠券小程序,跳转到广告页面    11~relation~qrid*/
         public static final String COUPON_AD= "11";
 
+        /**  *微信二维码类型,世界杯 */
+        public static final String WC= "WC";
         /** 微信小程序类型,TV挂角续费二维码  20~serviceID~cardId*/
         public static final String WXCODE_TV_RENEWAL  = "20";
         /** 微信小程序类型,TV挂角订购二维码  21~serviceID~cardId*/
@@ -46,14 +48,13 @@ public interface QrConstant {
         public static final String BI_AID_M = "81";
         public static final String BI_AID_R = "101";
         public static final String BI_AD_KEY = "2948C14F7ADC8896E0538D11CD0A3FF2";
-
+        public static final String  QR_STATIC_HOST = CF.qr.staticHost;
         /** 默认二维码  M - 中间,  R - 右下角*/
-//        public static  String QR_RULE_M = "{\"backhp\":35,\"backwp\":315,\"backsize\":650,\"qrwp\":490,\"qrhp\":297,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":-1,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/6501.png\",\"countdown\":false}";
-//        public static  String QR_RULE_R = "{\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"https://www.juzijumi.com/tvImage/185.png\",\"countdown\":false}";
+        public static  String QR_RULE_M = "{\"bw\":650,\"bl\":650,\"backhp\":35,\"backwp\":315,\"backsize\":650,\"qrwp\":490,\"qrhp\":297,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\""+QR_STATIC_HOST+"/gd/6501.png\",\"countdown\":false}";
+//        public static  String QR_RULE_R = "{\"bw\":185,\"bl\":185,\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\""+QR_STATIC_HOST+"/gd/185.png\",\"countdown\":false}";
+        //新 250
+        public static  String QR_RULE_R = "{\"bw\":250,\"bl\":250,\"backhp\":470,\"backwp\":1030,\"backsize\":250,\"qrwp\":1080,\"qrhp\":540,\"qrsize\":150,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\""+QR_STATIC_HOST+"/gd/250.png\",\"countdown\":false}";
 
-        //内网
-        public static  String QR_RULE_M = "{\"backhp\":35,\"backwp\":315,\"backsize\":650,\"qrwp\":490,\"qrhp\":297,\"qrsize\":300,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":-1,\"aftertime\":0,\"backurl\":\"http://172.31.252.35/gd/6501.png\",\"countdown\":false}";
-        public static  String QR_RULE_R = "{\"backhp\":515,\"backwp\":1075,\"backsize\":185,\"qrwp\":1112,\"qrhp\":566,\"qrsize\":112,\"qrurl\":\"https://www.htrnpay.cn/wx/1/\",\"workhours\":60000,\"aftertime\":0,\"backurl\":\"http://172.31.252.35/gd/185.png\",\"countdown\":false}";
 
     }
 

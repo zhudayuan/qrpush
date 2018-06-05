@@ -46,10 +46,12 @@ public interface CF {
 
     interface qr {
         String home = CF.cfg.getString("qr.home");
+        String staticHost = CF.cfg.getString("qr.static.host");
         interface log {
             String log_root_level = CF.cfg.getString("qr.log_root_level");
             String log_conf = home+"/"+CF.cfg.getString("qr.log_conf");
         }
+
     }
 
 

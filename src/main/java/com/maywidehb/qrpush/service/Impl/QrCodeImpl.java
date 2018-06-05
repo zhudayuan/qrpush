@@ -6,11 +6,12 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.maywidehb.qrpush.config.Logs;
 import com.maywidehb.qrpush.config.QrConstant;
+import com.maywidehb.qrpush.entity.PushCallbackImpl;
+import com.maywidehb.qrpush.entity.QrCodeTv2;
 import com.maywidehb.qrpush.entity.Result;
 import com.maywidehb.qrpush.service.QrManager;
 import com.maywidehb.qrpush.service.push.PushManager;
 import com.maywidehb.qrpush.utils.RedisUtil;
-import com.mpush.api.push.PushCallback;
 import com.mpush.api.push.PushResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -77,6 +78,7 @@ public class QrCodeImpl  implements QrManager {
         int num = 0;
         long sTime=System.currentTimeMillis();
         Statistics statistics = new Statistics();
+        String qrInfo;
         for(String ss:jsonList){
             JSONObject qrs = JSON.parseObject(ss);
             String channelIds = qrs.getString("CHANNELID");
@@ -84,28 +86,20 @@ public class QrCodeImpl  implements QrManager {
                 JSONObject qr = JSON.parseObject(ss);
                 userId = qr.getString("LOGICDEVNO");
                 qr.put("CHANNELID",channelIds.split(",")[i]);
-
                 num++;
                 try {
                     qr = dealQrCode(qr);
-
-                    //少量推送采用同步,数量大推送采用异步推送
-                    if(jsonList.size() < 2){
-                        pushResult = pushManager.send(userId,qr.toString(),null);
-                        statistics.add(pushResult.resultCode);
-                    }else{
-                        pushManager.futurePush(userId,qr.toString(),timeout,new PushCallback() {
-                            @Override
-                            public void onResult(PushResult result) {
-                                statistics.add(result.resultCode);
-                                Logs.QRPR.info("send msg {},userId={}",result.getResultDesc(), result.userId);
-                            }
-                        });
-                    }
+                    qrInfo = qr.getString("qrid");
+                    pushManager.futurePush(userId,qr.toString(),timeout,new PushCallbackImpl(qrInfo) {
+                        @Override
+                        public void onResult(PushResult result) {
+                            statistics.add(result.resultCode);
+                            Logs.QRPR.info("send msg {},userId={},qrid={}",result.getResultDesc(), result.userId,this.info);
+                        }
+                    });
                 }catch (Exception e){
                     statistics.add(2);
-                    Logs.QRPR.info("send msg failure {},userId={}",e.getMessage(), userId);
-//                    errorMsg += ",userId="+userId+"~"+e.getMessage();
+                    Logs.QRPR.info("send msg failure,userId={},ermsg={}",userId,e.getMessage());
                 }
             }
         }
@@ -117,11 +111,8 @@ public class QrCodeImpl  implements QrManager {
 
         statistics.totalNum.set(num);
         JSONObject rt =  new JSONObject();
-//        if(errorMsg!="")
-//            rt.put("errorMsg",errorMsg);
         rt.put("costTime",System.currentTimeMillis()-sTime);
         rt.put("result",statistics.toString());
-//        rt.put("serialno",serialno);
 
         ret.setCode(0);
         ret.setMsg("success");
@@ -133,18 +124,18 @@ public class QrCodeImpl  implements QrManager {
         JSONObject qrscene = new JSONObject();
         long startTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").parse(qr.getString("QRTIME")).getTime();
         if(startTime < System.currentTimeMillis()){
-            throw new Exception("QRTIME="+qr.getString("QRTIME")+" Less than the current time");
+            throw new Exception("QRTIME为"+qr.getString("QRTIME")+",小于当前时间");
         }
         String [] scene =qr.getString("QRURL").split("[?]");
         if(scene!=null && scene.length>1){
             String [] p =scene[1].split("&");
             for(int i=0;i < p.length ;i++){
                 if(StringUtils.isNotBlank(p[i])&&p[i].contains("=")){
-//                    qr.put(p[i].split("=")[0], p[i].split("=")[1]);
                     qrscene.put(p[i].split("=")[0], p[i].split("=")[1]);
                 }
             }
         }
+        qr.put("qrscene",qrscene.toString());
         qrscene.put("cardid", qr.get("LOGICDEVNO"));
         qrscene.put("serviceid", qr.getLongValue("CHANNELID"));
 
@@ -164,38 +155,50 @@ public class QrCodeImpl  implements QrManager {
         qr.put( "startTime",startTime);
         qr.put("timestamp", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
         qr.put("code", 1);
-        if(!qr.containsKey("qrtype")){
-            qrscene.put("qrtype", QrConstant.TCODE.COUPON_AD);
-            qr.put("qrtype",QrConstant.TCODE.COUPON_AD) ;
-        }
+
         JSONObject jsonObject = getQrByAID(qr.getString("AID"));
         //转换二维码边距
         qr.put("QRHP", jsonObject.getIntValue("backhp")+qr.getIntValue("QRHP"));
         qr.put("QRWP", jsonObject.getIntValue("backwp")+qr.getIntValue("QRWP"));
 
+        if(!qrscene.containsKey("qrtype")){
+            qrscene.put("qrtype", QrConstant.TCODE.COUPON_AD);
+            //qr.put("qrtype",QrConstant.TCODE.COUPON_AD) ;
+        }else if(QrConstant.TCODE.WC.equals(qrscene.getString("qrtype"))){
+            //世界杯
+            String url=RedisUtil.getKeyByDbidx("FIFA_"+qr.getString("cardid")+"_0",5);
+            if(StringUtils.isBlank(url)){
+                qr.put("QRURL", qr.getString("QRURL").split("[?]")[0]);
+            }else{
+                qr.put("QRURL", url);
+            }
+        }
+
         jsonObject  = mergeSameKeys(jsonObject,qr);
 
-        int time = (int)((startTime-System.currentTimeMillis()+qr.getLongValue("aftertime")+jsonObject.getLong("workhours"))/1000+600);
+        int time = (int)((startTime-System.currentTimeMillis()+qr.getLongValue("aftertime")+jsonObject.getLong("workhours"))/1000+1800);
         RedisUtil.setex("QRID_"+qrid,time, qrscene.toString(), 5);
         //记录二维码内容qrid
-        Logs.QRCODE.info(jsonObject.toString());
+        QrCodeTv2 qrCode=JSONObject.toJavaObject(jsonObject,QrCodeTv2.class);
+        qr.remove("qrscene");
+        Logs.QRCODE.info(qrCode.toString());
         return jsonObject;
     }
 
     private  JSONObject getQrByAID(String AID) throws Exception {
 
         String rule = "";
-        rule = RedisUtil.getKeyByDbidx("R_"+AID, 1);
-        if(StringUtils.isBlank(rule)){
-            if(QrConstant.PARAM.BI_AID_M.equals(AID)){
-                rule = QrConstant.PARAM.QR_RULE_M;
-            }else if(QrConstant.PARAM.BI_AID_R.equals(AID)){
-                rule = QrConstant.PARAM.QR_RULE_R;
-            }else{
-                throw new Exception("广告位不存在,请检查");
-            }
-        }
 
+        if(QrConstant.PARAM.BI_AID_M.equals(AID)){
+            rule = QrConstant.PARAM.QR_RULE_M;
+        }else if(QrConstant.PARAM.BI_AID_R.equals(AID)){
+            rule = QrConstant.PARAM.QR_RULE_R;
+        }else{
+            rule = RedisUtil.getKeyByDbidx("R_"+AID, 1);
+        }
+        if(StringUtils.isBlank(rule)){
+            throw new Exception("根据广告位"+AID+",获取二维码规则失败!");
+        }
         return JSON.parseObject(rule);
     }
     /**
@@ -229,10 +232,9 @@ public class QrCodeImpl  implements QrManager {
                 RedisUtil.expire(key, (int)(time+(Long.parseLong(tvTime)/1000)),  3);
             }
         }else if(-1 == Long.parseLong(tvTime)){
-            //订购频道,默认设置10分钟
+            //订购频道,默认设置30分钟
             String key = "V_"+cardId+"_"+serviceID;
-            RedisUtil.setex(key, 600, tvTime, 3);
-
+            RedisUtil.setex(key, 1800, tvTime, 3);
         }
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("aftertime", Long.parseLong(tvTime));
@@ -249,13 +251,17 @@ public class QrCodeImpl  implements QrManager {
 			throw new Exception("userId不能为空");
 		}
 
-        PushResult retResult = pushManager.send(userId,message,null);
+        PushResult retResult = pushManager.send(userId,message,new PushCallbackImpl(message) {
+            @Override
+            public void onResult(PushResult result) {
+                Logs.QRPR.info("send msg {},userId={},msg={}",result.getResultDesc(), result.userId,this.info);
+            }
+        });
 
         Result ret = new Result();
         if(null != retResult && 1 == retResult.resultCode){
             ret.setCode(0);
             ret.setMsg(retResult.getResultDesc());
-//            ret.setData(retResult.retData);
         }else if(null != retResult){
             ret.setCode(1);
             ret.setMsg(retResult.getResultDesc());

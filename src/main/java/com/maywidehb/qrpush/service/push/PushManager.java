@@ -32,11 +32,9 @@ import java.util.concurrent.FutureTask;
  * @author ohun@live.cn (夜色)
  */
 public interface PushManager {
-    PushResult sendBroadcast(List<String> tags, String condition, String message) throws Exception;
+    FutureTask sendBroadcast(List<String> tags, String condition, String message) throws Exception;
 
     PushResult send(String userId, String message, PushCallback callback) throws Exception;
-
-    PushResult send(List<String> userIds ,String message) throws Exception;
 
     FutureTask futurePush(String userId, String message, int timeout,PushCallback callBack) throws Exception;
 }

@@ -58,11 +58,11 @@
         <level value="debug"/>
         <appender-ref ref="STDOUT"/>
     </logger>
-    <logger name="qr.code.log" additivity="false">
+    <logger name="qr.code.log" additivity="true">
         <level value="debug"/>
         <appender-ref ref="QR_CODE_PUT"/>
     </logger>
-    <logger name="qr.request.log" additivity="false">
+    <logger name="qr.request.log" additivity="true">
         <level value="debug"/>
         <appender-ref ref="QR_REQUEST_APPENDER"/>
     </logger>
