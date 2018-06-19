@@ -24,15 +24,10 @@ public class PushServiceImpl implements PushManager {
     @Resource
     private PushSender mpusher;
     public PushServiceImpl(){
-//        if(null == mpusher){
-//            mpusher = PushSender.create();
-//            mpusher.start().join();
-//        }
     }
 
     @Override
     public FutureTask sendBroadcast(List<String> tags, String condition, String message) throws Exception{
-
         return null;
     }
 
@@ -42,8 +37,7 @@ public class PushServiceImpl implements PushManager {
         if(StringUtils.isEmpty(userId)){
             throw new Exception("根据userId推送消息,userId不能为空");
         }
-//        return send(userId,null,AckModel.AUTO_ACK, message,false,null,
-//                null,30000 ,callback);
+
         PushContext context = PushContext.build(message)
                 .setAckModel(AckModel.AUTO_ACK)
                 .setUserId(userId)
@@ -70,8 +64,11 @@ public class PushServiceImpl implements PushManager {
         int num = 3;
         while(PushResult.CODE_TIMEOUT == pushResult.resultCode && num > 0){
             if(context.getCallback() == null){
-                Logs.QRPR.info("send msg {},userId={},timeLine={}",
-                        pushResult.getResultDesc(), context.getUserId(), Arrays.toString(pushResult.timeLine));
+//                Logs.QRPR.info("send msg {},userId={},timeLine={}",
+//                        pushResult.getResultDesc(), context.getUserId(), Arrays.toString(pushResult.timeLine));
+                Logs.QRPR.info("send msg {},userId={},qrid={},msg={}",
+                        pushResult.getResultDesc(), context.getUserId(),null,Arrays.toString(pushResult.timeLine));
+
             }
             Thread.sleep(100);
             context.setTimeout(context.getTimeout() + (3-num)*2000);
@@ -80,16 +77,12 @@ public class PushServiceImpl implements PushManager {
             pushResult = future.get();
         }
         if(context.getCallback() == null){
-            Logs.QRPR.info("send msg {},userId={}",pushResult.getResultDesc(), context.getUserId());
+            Logs.QRPR.info("send msg {},userId={},qrid={},msg={}",
+                    pushResult.getResultDesc(), context.getUserId(),null,null);
         }
 
         return pushResult;
     }
-
-
-
-
-
 
     @Override
     public FutureTask futurePush(String userId, String message, int timeout, PushCallback callBack) {

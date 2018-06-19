@@ -142,5 +142,20 @@ public class PushAction {
         return manager.pushQrList(jsonList);
     }
 
+    @RequestMapping(value="/batchPushQrcode")
+    public Result batchPushQrcode(HttpServletRequest request)throws Exception{
+
+        String cardnos = request.getParameter("cardnos");
+        String param = request.getParameter("param");
+        //{"LOGICDEVNO":"CARDNO","AID":"101","DELIVERID":"123","AFTERTIMES":0,"WORKTIMES":90000,"CHANNELID":"475,476,84","QRTIME":"20180614 17:30:00","QRURL":"http://weixin.qq.com/q/02yAR6tahRdVi1lha9xrci?qrtype=WC","QRWP":50,"QRHP":70,"QRSIZE":150,"BACKURL":"http://172.31.252.35/test/jchbzq_250.png","COUNTDOWN":0}
+        List<String> jsonList = new ArrayList<>();
+        for(String cardno:cardnos.split(",")){
+            jsonList.add(param.replace("CARDNO",cardno));
+        }
+        if(jsonList.size()<1){
+            throw new Exception("参数为空");
+        }
+        return manager.pushQrList(jsonList);
+    }
 
 }

@@ -29,7 +29,6 @@ public class QrCodeImpl  implements QrManager {
     @Resource
     private PushManager pushManager;
 
-
     /**
      *
      */
@@ -71,7 +70,7 @@ public class QrCodeImpl  implements QrManager {
         Result ret = new Result();
         PushResult pushResult;
         String userId;
-//        String errorMsg = "";
+        String errorMsg = "";
 //        String serialno = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
 //        serialno += ((int)(Math.random()*900)+100);
         int timeout = 20000;
@@ -79,6 +78,7 @@ public class QrCodeImpl  implements QrManager {
         long sTime=System.currentTimeMillis();
         Statistics statistics = new Statistics();
         String qrInfo;
+        String qrtime = null;
         for(String ss:jsonList){
             JSONObject qrs = JSON.parseObject(ss);
             String channelIds = qrs.getString("CHANNELID");
@@ -88,18 +88,20 @@ public class QrCodeImpl  implements QrManager {
                 qr.put("CHANNELID",channelIds.split(",")[i]);
                 num++;
                 try {
+                    qrtime = qr.getString("QRTIME");
                     qr = dealQrCode(qr);
                     qrInfo = qr.getString("qrid");
                     pushManager.futurePush(userId,qr.toString(),timeout,new PushCallbackImpl(qrInfo) {
                         @Override
                         public void onResult(PushResult result) {
                             statistics.add(result.resultCode);
-                            Logs.QRPR.info("send msg {},userId={},qrid={}",result.getResultDesc(), result.userId,this.info);
+                            Logs.QRPR.info("send msg {},userId={},qrid={},msg={}",result.getResultDesc(), result.userId,this.info,null);
                         }
                     });
                 }catch (Exception e){
                     statistics.add(2);
-                    Logs.QRPR.info("send msg failure,userId={},ermsg={}",userId,e.getMessage());
+                    errorMsg = e.getMessage();
+                    Logs.QRPR.info("send msg failure,userId={},qrid={},msg={}",userId,qr.getString("qrid"),e.getMessage());
                 }
             }
         }
@@ -113,7 +115,11 @@ public class QrCodeImpl  implements QrManager {
         JSONObject rt =  new JSONObject();
         rt.put("costTime",System.currentTimeMillis()-sTime);
         rt.put("result",statistics.toString());
-
+        rt.put("cardNum",jsonList.size());
+        rt.put("qrtime",qrtime);
+        if(StringUtils.isNotBlank(errorMsg)){
+            rt.put("errorMsg",errorMsg);
+        }
         ret.setCode(0);
         ret.setMsg("success");
         ret.setData(rt);
@@ -166,7 +172,7 @@ public class QrCodeImpl  implements QrManager {
             //qr.put("qrtype",QrConstant.TCODE.COUPON_AD) ;
         }else if(QrConstant.TCODE.WC.equals(qrscene.getString("qrtype"))){
             //世界杯
-            String url=RedisUtil.getKeyByDbidx("FIFA_"+qr.getString("cardid")+"_0",5);
+            String url=RedisUtil.getKeyByDbidx("WC_"+qr.getString("cardid")+"_0",5);
             if(StringUtils.isBlank(url)){
                 qr.put("QRURL", qr.getString("QRURL").split("[?]")[0]);
             }else{
