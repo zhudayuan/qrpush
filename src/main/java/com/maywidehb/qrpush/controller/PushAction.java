@@ -158,4 +158,13 @@ public class PushAction {
         return manager.pushQrList(jsonList);
     }
 
+    @RequestMapping("/pushQrcode2")
+    public Result pushQrList2(@RequestBody Map<String,Object> reqMap)throws Exception{
+
+        if(reqMap.get("QRLIST") == null ){
+            throw new Exception("参数QRLIST为空");
+        }
+        List<String> jsonList = JSON.parseArray(JSON.toJSONString(reqMap.get("QRLIST")),String.class);
+        return manager.pushQrList2(jsonList);
+    }
 }

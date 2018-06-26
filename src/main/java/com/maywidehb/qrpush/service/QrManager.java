@@ -12,4 +12,6 @@ public interface QrManager {
     Result pushCodeToClient(String cardid,String code,String qrid,String serviceid) throws Exception;
 
     Result pushQrList(List<String> jsonList) throws Exception;
+    Result pushQrList2(List<String> jsonList) throws Exception;
+
 }

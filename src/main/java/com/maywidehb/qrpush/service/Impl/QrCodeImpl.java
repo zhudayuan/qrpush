@@ -2,6 +2,7 @@ package com.maywidehb.qrpush.service.Impl;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.maywidehb.qrpush.config.Logs;
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -126,6 +128,159 @@ public class QrCodeImpl  implements QrManager {
         return ret;
     }
 
+    @Override
+    public Result pushQrList2(List<String> jsonList) throws Exception {
+        Result ret = new Result();
+        PushResult pushResult;
+        String userId = "";
+        String errorMsg = "";
+//        String serialno = new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+//        serialno += ((int)(Math.random()*900)+100);
+        int timeout = 20000;
+        int num = 0;
+        long sTime=System.currentTimeMillis();
+        Statistics statistics = new Statistics();
+        String qrInfo="",qrTime="";
+        JSONArray qrs = new JSONArray(),qrs1 = new JSONArray();
+        JSONObject qr =new JSONObject(),qr1 =new JSONObject();
+
+        for(String ss:jsonList){
+            qrs = JSON.parseArray(ss);
+            String [] channelIds = qrs.getJSONObject(0).getString("CHANNELID").split(",");
+            for(int i=0; i<channelIds.length;i++){
+                String channelID = channelIds[i];
+                qrs1.clear();
+                qr1.clear();
+                num++;
+                qrInfo = "";
+                try {
+                    if(i==0){
+                         qr.clear();
+                        qrs.getJSONObject(0).put("CHANNELID",channelID);
+                        qr=dealQrCode0(qrs.getJSONObject(0));
+                        userId = qr.getString("cardid");
+                        qrTime = qrs.getJSONObject(0).getString("QRTIME");
+                    }
+                    for(int j=0;qr!=null&j<qrs.size();j++){
+                        qrs.getJSONObject(j).put("CHANNELID",channelID);
+                        qrs1.add(dealQrCode1(qr));
+                        qrInfo += qrs1.getJSONObject(j).getString("qrid")+"~";
+                    }
+
+                    qr1.put("code", 1);
+                    qr1.put("starttime",qr.get("starttime"));
+                    qr1.put("banner",qrs1);
+                    //第三方参数,如跳转到app
+                    String param3 = qr.getJSONObject("qrscene").getString("param3");
+                    if(param3!=null){
+                        qr1.put(param3,qr.getJSONObject("qrscene"));
+                    }
+                    Logs.Console.debug(qr1.toString());
+                    FutureTask future = pushManager.futurePush(userId,qr1.toString(),timeout,new PushCallbackImpl(qrInfo) {
+                        @Override
+                        public void onResult(PushResult result) {
+                            statistics.add(result.resultCode);
+                            Logs.QRPR.info("send msg {},userId={},qrid={},msg={}",result.getResultDesc(), result.userId,this.info,null);
+                        }
+                    });
+                }catch (Exception e){
+                    statistics.add(2);
+                    errorMsg = e.getMessage();
+                    Logs.QRPR.info("send msg failure,userId={},qrid={},msg={}",userId,qr.getString("qrid"),e.getMessage());
+                    break;
+                }
+            }
+        }
+        int j = timeout/10;
+        while(statistics.totalNum.get() < num && j>0){
+            j--;
+            Thread.sleep(10);
+        }
+
+        statistics.totalNum.set(num);
+        JSONObject rt =  new JSONObject();
+        rt.put("costTime",System.currentTimeMillis()-sTime);
+        rt.put("result",statistics.toString());
+        rt.put("cardNum",jsonList.size());
+        rt.put("qrtime",qrTime);
+        if(StringUtils.isNotBlank(errorMsg)){
+            rt.put("errorMsg",errorMsg);
+        }
+        ret.setCode(0);
+        ret.setMsg("success");
+        ret.setData(rt);
+        return ret;
+    }
+    private JSONObject dealQrCode0(JSONObject qr) throws Exception {
+        JSONObject qrscene = new JSONObject();
+        long startTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").parse(qr.getString("QRTIME")).getTime();
+        if(startTime < System.currentTimeMillis()){
+            throw new Exception("QRTIME为"+qr.getString("QRTIME")+",小于当前时间");
+        }
+        String [] scene =qr.getString("QRURL").split("[?]");
+        if(scene!=null && scene.length>1){
+            String [] p =scene[1].split("&");
+            for(int i=0;i < p.length ;i++){
+                if(StringUtils.isNotBlank(p[i])&&p[i].contains("=")){
+                    qrscene.put(p[i].split("=")[0], p[i].split("=")[1]);
+                }
+            }
+        }
+        if(!qrscene.containsKey("qrtype")){
+            qrscene.put("qrtype", QrConstant.TCODE.COUPON_AD);
+        }else if(QrConstant.TCODE.WC.equals(qrscene.getString("qrtype"))){
+            //世界杯
+            String url=RedisUtil.getKeyByDbidx("WC_"+qr.getString("cardid")+"_0",5);
+            if(StringUtils.isBlank(url)){
+                qr.put("QRURL", qr.getString("QRURL").split("[?]")[0]);
+            }else{
+                qr.put("QRURL", url);
+            }
+        }else if(QrConstant.TCODE.JUMP2APP.equals(qrscene.getString("qrtype"))){
+            //世界杯
+            qrscene.put("param3","jumptoapk");
+        }
+        qr.put("qrscene",qrscene);
+        qrscene.put("cardid", qr.get("LOGICDEVNO"));
+        qrscene.put("serviceid", qr.getLongValue("CHANNELID"));
+
+
+        qr.put("cardid", qr.get("LOGICDEVNO"));
+        qr.put("serviceid", qr.getLongValue("CHANNELID"));
+        qr.put("workhours", qr.get("WORKTIMES"));
+        qr.put("aftertime", qr.get("AFTERTIMES"));
+        qr.put("COUNTDOWN", (0==qr.getInteger("COUNTDOWN")));
+
+        qr.remove("WORKTIMES");
+        qr.remove("LOGICDEVNO");
+        qr.remove("CHANNELID");
+        qr.remove("AFTERTIMES");
+        qr.put( "starttime",startTime);
+        qr.put("timestamp", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
+        qr.put("code", 1);
+        JSONObject jsonObject = getQrByAID(qr.getString("AID"));
+        //转换二维码边距
+        qr.put("QRHP", jsonObject.getIntValue("backhp")+qr.getIntValue("QRHP"));
+        qr.put("QRWP", jsonObject.getIntValue("backwp")+qr.getIntValue("QRWP"));
+
+        jsonObject  = mergeSameKeys(jsonObject,qr);
+        return jsonObject;
+    }
+    private JSONObject dealQrCode1(JSONObject qr) throws Exception {
+        JSONObject jsonObject= JSON.parseObject(qr.toString());
+        Long qrid = RedisUtil.incr("QRPUT_QRID",2);
+        jsonObject.put("qrid", qrid);
+        jsonObject.put("qrurl", jsonObject.getString("qrurl").split("[?]")[0]+"?qrid="+qrid);
+
+        int time = (int)((jsonObject.getLongValue("starttime")-System.currentTimeMillis()
+                +jsonObject.getLongValue("aftertime")+jsonObject.getLong("workhours"))/1000+1800);
+        RedisUtil.setex("QRID_"+qrid,time, jsonObject.getString("qrscene"), 5);
+        //记录二维码内容qrid
+        QrCodeTv2 qrCode=JSONObject.toJavaObject(jsonObject,QrCodeTv2.class);
+        Logs.QRCODE.info(qrCode.toString());
+        jsonObject.remove("qrscene");
+        return jsonObject;
+    }
     private JSONObject dealQrCode(JSONObject qr) throws Exception {
         JSONObject qrscene = new JSONObject();
         long startTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").parse(qr.getString("QRTIME")).getTime();
@@ -158,7 +313,7 @@ public class QrCodeImpl  implements QrManager {
         qr.remove("LOGICDEVNO");
         qr.remove("CHANNELID");
         qr.remove("AFTERTIMES");
-        qr.put( "startTime",startTime);
+        qr.put( "starttime",startTime);
         qr.put("timestamp", new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()));
         qr.put("code", 1);
 
@@ -169,7 +324,6 @@ public class QrCodeImpl  implements QrManager {
 
         if(!qrscene.containsKey("qrtype")){
             qrscene.put("qrtype", QrConstant.TCODE.COUPON_AD);
-            //qr.put("qrtype",QrConstant.TCODE.COUPON_AD) ;
         }else if(QrConstant.TCODE.WC.equals(qrscene.getString("qrtype"))){
             //世界杯
             String url=RedisUtil.getKeyByDbidx("WC_"+qr.getString("cardid")+"_0",5);
@@ -186,7 +340,7 @@ public class QrCodeImpl  implements QrManager {
         RedisUtil.setex("QRID_"+qrid,time, qrscene.toString(), 5);
         //记录二维码内容qrid
         QrCodeTv2 qrCode=JSONObject.toJavaObject(jsonObject,QrCodeTv2.class);
-        qr.remove("qrscene");
+        jsonObject.remove("qrscene");
         Logs.QRCODE.info(qrCode.toString());
         return jsonObject;
     }

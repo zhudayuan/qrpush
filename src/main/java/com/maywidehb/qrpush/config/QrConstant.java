@@ -19,6 +19,8 @@ public interface QrConstant {
 
         /**  *微信二维码类型,世界杯 */
         public static final String WC= "WC";
+        /**  *微信二维码类型,跳转到其他app */
+        public static final String JUMP2APP= "JUMP2APP";
         /** 微信小程序类型,TV挂角续费二维码  20~serviceID~cardId*/
         public static final String WXCODE_TV_RENEWAL  = "20";
         /** 微信小程序类型,TV挂角订购二维码  21~serviceID~cardId*/
